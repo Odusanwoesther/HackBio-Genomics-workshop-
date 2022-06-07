@@ -1,0 +1,68 @@
+    #! /bin/ sh
+    Bash code for printing name
+    NAME="Esther"  
+    SURNAME="Odusanwo"
+    clear
+    echo "$NAME $SURNAME
+    echo "$NAME "
+    echo "SURNAME"
+   
+   
+    #Bash story one
+    cd ..
+    mkdir Esther
+    mkdir biocomputing && cd biocomputing
+    wget https://raw.githubusercontent.com/josoga2/dataset-repos/main/wildtype.fna
+    wget https://raw.githubusercontent.com/josoga2/dataset-repos/main/wildtype.gbk
+    wget https://raw.githubusercontent.com/josoga2/dataset-repos/main/wildtype.gbk 
+    ls
+    mv wildtype.fna ../Esther/
+    ls
+    rm wildtype.gbk.1
+    cd Esther
+    grep tatatata wildtype.fna
+    grep -n tatatata wildtype.fna > mutanttype.fna
+    clear
+    history
+    ls && ../biocomputing
+    cd
+    clear
+   
+   
+    #Bash story two
+    sudo apt install figlet toilet
+    figlet Esther
+    figlet -c Esther Odusanwo
+   
+   
+    #Answer 3  
+    mkdir compare
+    cd compare
+    wget https://www.bioinformatics.babraham.ac.uk/training/Introduction%20to%20Unix/unix_intro_data.tar.gz
+    ls
+    gunzip unix_intro_data.tar.gz
+    ls
+    tar -xvf unix_intro_data.tar
+    ls
+    cd seqmonk_genomes  
+    ls
+    cd Saccharomyces\ cerevisiae/
+    ls
+    cd EF4/
+    ls
+    grep rRNA Mito.dat
+    ls
+    cp Mito.dat ~/compare
+    nano Mito.dat
+    ls
+   
+  
+    #Answer 4
+    cd compare
+    ls
+    cd FastQ_Data
+    ls
+    zcat lane8_DD_P4_TTAGGC_L008_R1.fastq.gz | wc - 1
+    zcat -n *.fastagz  | wc - 1 > totalcount
+    cd
+    exit
