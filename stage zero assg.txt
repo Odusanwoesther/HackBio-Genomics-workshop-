@@ -1,0 +1,65 @@
+   1   #! /bin/ sh
+   2  Bash code for printing name
+   3  NAME="Esther"  
+   4  SURNAME="Odusanwo"
+   5  clear
+   6  echo "$NAME $SURNAME
+   7  echo "$NAME "
+   8  echo "SURNAME"
+   9  
+   10  #Bash story one
+   11  cd ..
+   12  mkdir Esther
+   13  mkdir biocomputing && cd biocomputing
+   14  wget https://raw.githubusercontent.com/josoga2/dataset-repos/main/wildtype.fna
+   15  wget https://raw.githubusercontent.com/josoga2/dataset-repos/main/wildtype.gbk
+   16  wget https://raw.githubusercontent.com/josoga2/dataset-repos/main/wildtype.gbk 
+   17  ls
+   18  mv wildtype.fna ../Esther/
+   19  ls
+   20  rm wildtype.gbk.1
+   21  cd Esther
+   22  grep tatatata wildtype.fna
+   23  grep -n tatatata wildtype.fna > mutanttype.fna
+   24  clear
+   25  history
+   26  ls && ../biocomputing
+   27  cd
+   28  clear
+   29 
+   30  #Bash story two
+   31  sudo apt install figlet toilet
+   32  figlet Esther
+   33  figlet -c Esther Odusanwo
+   34  
+   35  
+   36  #Answer 3  
+   37  mkdir compare
+   38  cd compare
+   39  wget https://www.bioinformatics.babraham.ac.uk/training/Introduction%20to%20Unix/unix_intro_data.tar.gz
+   40  ls
+   41  gunzip unix_intro_data.tar.gz
+   42  ls
+   43  tar -xvf unix_intro_data.tar
+   44  ls
+   45  cd seqmonk_genomes  
+   46  ls
+   47  cd Saccharomyces\ cerevisiae/
+   48  ls
+   49  cd EF4/
+   50  ls
+   51  grep rRNA Mito.dat
+   52  ls
+   53  cp Mito.dat ~/compare
+   54  nano Mito.dat
+   55  ls
+   56  
+   57  #Answer 4
+   58  cd compare
+   59  ls
+   60  cd FastQ_Data
+   61  ls
+   62  zcat lane8_DD_P4_TTAGGC_L008_R1.fastq.gz | wc - 1
+   63  zcat -n *.fastagz  | wc - 1 > totalcount
+   64  cd
+   65  exit
