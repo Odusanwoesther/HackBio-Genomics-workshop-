@@ -1,0 +1,50 @@
+#To read and count sequences
+wget https://raw.githubusercontent.com/HackBio-Internship/wale-home-tasks/main/DNA.fa
+grep -v "^>" DNA.fa | wc -c
+grep -o 'A\|T\|G\|C' DNA.fa | sort | uniq -c
+
+#setting up a conda environment
+wget https://repo.anaconda.com/miniconda/Miniconda3-py38_4.12.0-Linux-x86_64.sh
+chmod +x Miniconda3-py38_4.12.0-Linux-x86_64.sh
+./Miniconda3-py38_4.12.0-Linux-x86_64.sh
+
+
+#Installing some of the softwares needed to work on the datasets
+conda install -c bioconda spades
+conda install -c bioconda fastq-tools
+conda install -c bioconda cutadapt
+conda install -c bioconda fastp
+conda install -c bioconda fastx_toolkit
+conda install -c bioconda seqtk
+conda install -c bioconda bwa
+conda install -c bioconda samtools
+conda install -c bioconda bedtools
+conda install -c bioconda multiqc
+conda install -c bioconda fastqc
+
+#Downloading chara forward and reverse dataset from github
+
+wget https://github.com/josoga2/yt-dataset/blob/main/dataset/raw_reads/Chara_R1.fastq.gz?raw=true -O Chara_R1.fastq.gz
+wget https://github.com/josoga2/yt-dataset/blob/main/dataset/raw_reads/Chara_R2.fastq.gz?raw=true -O Chara_R2.fastq.gz
+
+#Creating an output folder
+mkdir Output
+
+#running fastqc on dataset downloaded and sending reports to Output
+fastqc *.fastq.gz -O Output/
+
+#running fastp on reads saved to Output and saving result as html file
+SAMPLE=( 
+"Chara"
+)
+
+for SAMPLE in "${SAMPLE [@] }" ; do
+fastp \ 
+	-i "PWD/${SAMPLE}_R1.fastq.gz"\
+	-I "PWD/${SAMPLE}_R2.fastq.gz"\
+	-o "Output/${SAMPLE}_R1.fastq.gz"\
+	-O "Output/${SAMPLE}_R2.fastq.gz"\
+	--html "Output/${SAMPLE}_fastp.html
+
+#running spades on reads and sending the report file to "spades_report" folder
+spades.py -1 Chara_R1.fastq.gz -2 Chara_R2.fastq.gz --careful --cov-cutoff auto -o spades_report
