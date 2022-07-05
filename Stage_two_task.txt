@@ -1,0 +1,222 @@
+#! bin/bash
+
+#Login to the server and enter pasword blindly
+#creating a folder of my name in the group directory and change directory to my name
+cd rosalind
+mkdir Esther
+cd Esther
+
+#creating a folder to download the dataset
+mkdir raw_data 
+cd raw_data
+
+#Downlading dataset to work with
+wget https://zenodo.org/record/2582555/files/SLGFSK-N_231335_r1_chr5_12_17.fastq.gz
+wget https://zenodo.org/record/2582555/files/SLGFSK-N_231335_r2_chr5_12_17.fastq.gz
+wget https://zenodo.org/record/2582555/files/SLGFSK-T_231336_r1_chr5_12_17.fastq.gz
+wget https://zenodo.org/record/2582555/files/SLGFSK-T_231336_r2_chr5_12_17.fastq.gz	
+
+#download reference sequence in reference folder
+mkdir ref
+cd ref
+wget https://zenodo.org/record/2582555/files/hg19.chr5_12_17.fa.gz
+
+#unzip reference file
+gunzip hg19.chr5_12_17.fa.gz
+
+cd ..
+#quality control using fastqc
+mkdir -p Fastqc_Reports  
+
+#create directory for the fastqc output
+fastqc *.fastq.gz -o Fastqc_Reports
+
+#quality control using multiqc
+cd Fastqc_Reports
+multiqc Fastqc_Reports -o Fastqc_Reports
+
+#Removing low quality sequences using Trimmomatic
+#downlaod trimmomatic
+wget http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-0.39.zip
+
+#unzip Trimmomatic-0.39.zip
+unzip Trimmomatic-0.39.zip
+cp Trimmomatic-0.39/adapters/TruSeq3-SE.fa $PWD
+
+#create a txt file for the raw data & clear characters after the filename, save and exit nano
+ls *.fastq.gz > list.txt
+cat list.txt
+nano list.txt (clear characters after the file name, save & exit nano)
+
+#create trimming.sh with nano
+nano trimming.sh (input the command below)
+
+mkdir -p trimmed_reads
+​
+for sample in `cat list.txt`
+do
+       trimmomatic PE -threads 8 ${sample}_r1_chr5_12_17.fastq.gz ${sample}_r2_chr5_12_17.fastq.gz \
+               trimmed_reads/${sample}_r1_paired.fq.gz trimmed_reads/${sample}_r1_unpaired.fq.gz \
+               trimmed_reads/${sample}_r2_paired.fq.gz trimmed_reads/${sample}_r2_unpaired.fq.gz \
+               ILLUMINACLIP:TruSeq3-PE.fa:2:30:10:8:keepBothReads \
+               LEADING:3 TRAILING:10 MINLEN:25
+       
+       fastqc  trimmed_reads/${sample}_r1_paired.fq.gz  trimmed_reads/${sample}_r2_paired.fq.gz \
+                 -o trimmed_reads/Fastqc_results
+done 
+​
+multiqc  trimmed_reads/Fastqc_results  -o trimmed_reads/Fastqc_results
+#save and exit nano
+
+mkdir trimmed_reads
+cd trimmed_reads && mkdir Fastqc_results
+cd ..
+bash trimming.sh
+
+#Read mapping using bwa
+​cd ref
+#Index reference file	
+bwa index hg19.chr5_12_17.fa 
+​
+cd ..
+#align by creating a aligner.sh in nano
+nano aligner.sh (and input the command below)
+mkdir Mapping
+   
+#Perform alignment
+bwa mem -R '@RG\tID:231335\tSM:Normal' ref/hg19.chr5_12_17.fa trimmed_reads/SLGFSK-N_231335_r1_paired.fq.gz \
+      trimmed_reads/SLGFSK-N_231335_r2_paired.fq.gz > Mapping/SLGFSK-N_231335.sam
+​
+bwa mem -R '@RG\tID:231336\tSM:Tumor' ref/hg19.chr5_12_17.fa trimmed_reads/SLGFSK-T_231336_r1_paired.fq.gz \
+       trimmed_reads/SLGFSK-T_231336_r2_paired.fq.gz > Mapping/SLGFSK-T_231336.sam	
+
+#save and exit nano
+​
+bash aligner.sh
+
+#Conversion of the SAM file to BAM file, sorting and indexing
+cd Mapping
+nano list.txt
+# copy & paste SLGFSK-N_231335
+# copy & paste SLGFSK-T_231336
+#save and exit nano
+
+#create bam.sh with nano
+ nano bam.sh (input the command below)
+
+for sample in `cat list.txt`
+do
+        #Convert SAM to BAM and sort it 
+        samtools view -@ 20 -S -b ${sample}.sam | samtools sort -@ 32 > ${sample}.sorted.bam
+        
+        #Index BAM file
+        samtools index ${sample}.sorted.bam
+done
+
+bash bam.sh
+
+#Mapped reads filtering
+#create filter.sh for one command filtering with nano text editor
+nano filter.sh (input the command below)
+
+for sample in `cat list.txt`
+do
+	#Filter BAM files
+        samtools view -q 1 -f 0x2 -F 0x8 -b ${sample}.sorted.bam > ${sample}.filtered1.bam
+done
+#save and exit nano
+
+bash filter.sh
+
+#To view the output of the results use :
+samtools flagstat <bam filename>
+
+#Duplicates removal
+#To remove duplicates from the filtered file
+#create duplicate.sh for one command duplicate removal with nano
+nano duplicate.sh (input the command below)
+
+for sample in `cat list.txt`
+do
+	samtools collate ${sample}.filtered1.bam ${sample}.namecollate
+        samtools fixmate -m ${sample}.namecollate.bam ${sample}.fixmate.bam
+        samtools sort -@ 32 -o ${sample}.positionsort.bam ${sample}.fixmate.bam
+        samtools markdup -@32 -r ${sample}.positionsort.bam ${sample}.clean.bam
+done       
+#save and exit nano
+
+bash duplicate.sh
+
+cd ..
+
+#Left Align BAM
+nano leftalign.sh (input the command below)
+
+for sample in `cat list.txt`
+do      
+        cat Mapping/${sample}.clean.bam  | bamleftalign -f hg19.chr5_12_17.fa -m 5 -c > Mapping/${sample}.leftAlign.bam
+
+done
+#save and exit nano
+
+#copy reference to PWD
+cp ref/hg19.chr5_12_17.fa $PWD
+
+bash leftalign.sh
+
+#Recalibrate read mapping qualities 
+nano recalibrate.sh (input the command below)
+
+for sample in `cat list.txt`
+do
+        samtools calmd -@ 32 -b Mapping/${sample}.leftAlign.bam hg19.chr5_12_17.fa > Mapping/${sample}.recalibrate.bam
+done
+#save and exit nano
+
+bash recalibrate.sh
+
+
+#Refilter read mapping qualities
+nano refilter.sh (input the command below)
+
+for sample in `cat list.txt`
+do
+        bamtools filter -in Mapping/${sample}.recalibrate.bam -mapQuality <=254 > Mapping/${sample}.refilter.bam
+done
+
+#Variant calling and classification
+wget  https://sourceforge.net/projects/varscan/files/VarScan.v2.3.9.jar	   
+
+#convert variant to pileup
+
+mkdir Variants
+
+#nano variant.sh (input the command below)
+
+for sample in `cat list.txt`
+do
+        samtools mpileup -f hg19.chr5_12_17.fa Mapping/${sample}.refilter.bam --min-MQ 1 --min-BQ 28 \
+                > Variants/${sample}.pileup
+done
+
+#Call variants
+java -jar VarScan.v2.3.9.jar somatic Variants/SLGFSK-N_231335.pileup \
+        Variants/SLGFSK-T_231336.pileup Variants/SLGFSK \
+        --normal-purity 1  --tumor-purity 0.5 --output-vcf 1 
+       
+
+#merge vcf using bcftools
+bgzip Variants/SLGFSK.snp.vcf > Variants/SLGFSK.snp.vcf.gz
+bgzip Variants/SLGFSK.indel.vcf > Variants/SLGFSK.indel.vcf.gz
+tabix Variants/SLGFSK.snp.vcf.gz
+tabix Variants/SLGFSK.indel.vcf.gz
+bcftools merge Variants/SLGFSK.snp.vcf.gz Variants/SLGFSK.indel.vcf.gz > Variants/SLGFSK.vcf
+
+#save and exit nano
+
+bash variant.sh
+
+#variant annotation
+ snpEff hg19 Variants/SLGFSK.vcf > Variants/SLGFSK.ann.vc
+
+​
